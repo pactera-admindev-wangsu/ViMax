@@ -1,3 +1,4 @@
+import {t, translateError, useLocale, LanguageSwitcher} from './i18n';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   ArrowUp,
@@ -42,6 +43,7 @@ const CONTEXT_TARGET = 160_000;
 type WorkspaceView = 'workspace' | 'artifacts' | 'settings';
 
 export default function App() {
+  const locale = useLocale();
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [chat, setChat] = useState<ChatState>(() => createChatState());
@@ -312,7 +314,7 @@ export default function App() {
   const hasConversation = chat.messages.length > 0;
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" lang={locale}>
       <Sidebar
         open={sidebarOpen}
         mobileOpen={mobileSidebarOpen}
@@ -341,18 +343,18 @@ export default function App() {
       <main className="workspace-main">
         {workspaceView === 'workspace' ? (
           <div className="workspace-utility-bar">
-            <button className="icon-button mobile-only" onClick={() => setMobileSidebarOpen(true)} aria-label="Open navigation">
+            <button className="icon-button mobile-only" onClick={() => setMobileSidebarOpen(true)} aria-label={t("Open navigation")}>
               <Menu size={19} />
             </button>
             {!sidebarOpen && (
-              <button className="icon-button desktop-only" onClick={() => setSidebarOpen(true)} aria-label="Open navigation">
+              <button className="icon-button desktop-only" onClick={() => setSidebarOpen(true)} aria-label={t("Open navigation")}>
                 <PanelLeftOpen size={18} />
               </button>
             )}
             <span className="workspace-utility-spacer" />
             <div className="workspace-utility-actions">
-              <ThemeToggle theme={theme} onToggle={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
-              <button className="icon-button artifact-toggle" onClick={() => setStoryboardPanelOpen((value) => !value)} aria-label="Toggle storyboard preview">
+              <LanguageSwitcher /><ThemeToggle theme={theme} onToggle={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
+              <button className="icon-button artifact-toggle" onClick={() => setStoryboardPanelOpen((value) => !value)} aria-label={t("Toggle storyboard preview")}>
                 <PanelRight size={18} />
                 {storyboardCount > 0 && <span className="count-badge">{storyboardCount}</span>}
               </button>
@@ -361,20 +363,20 @@ export default function App() {
         ) : (
           <header className="workspace-header">
             <div className="workspace-title-row">
-              <button className="icon-button mobile-only" onClick={() => setMobileSidebarOpen(true)} aria-label="Open navigation">
+              <button className="icon-button mobile-only" onClick={() => setMobileSidebarOpen(true)} aria-label={t("Open navigation")}>
                 <Menu size={19} />
               </button>
               {!sidebarOpen && (
-                <button className="icon-button desktop-only" onClick={() => setSidebarOpen(true)} aria-label="Open navigation">
+                <button className="icon-button desktop-only" onClick={() => setSidebarOpen(true)} aria-label={t("Open navigation")}>
                   <PanelLeftOpen size={18} />
                 </button>
               )}
               <div className="workspace-title-copy">
-                <strong>{workspaceView === 'settings' ? 'Settings' : 'Artifacts'}</strong>
+                <strong>{workspaceView === 'settings' ? t("Settings") : t("Artifacts")}</strong>
                 {workspaceView === 'settings' && <span>configs/agent.local.yaml</span>}
               </div>
             </div>
-            <ThemeToggle theme={theme} onToggle={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
+            <LanguageSwitcher /><ThemeToggle theme={theme} onToggle={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')} />
           </header>
         )}
 
@@ -398,8 +400,8 @@ export default function App() {
         {workspaceView === 'workspace' && <div className="composer-zone">
           {loadError && (
             <div className="inline-error" role="alert">
-              <span>{loadError}</span>
-              <button onClick={() => setLoadError('')} aria-label="Dismiss error"><X size={15} /></button>
+              <span>{translateError(loadError)}</span>
+              <button onClick={() => setLoadError('')} aria-label={t("Dismiss error")}><X size={15} /></button>
             </div>
           )}
           {showSlashCommands && <SlashCommandMenu matches={slashMatches} contextPercent={contextPercent} onSelect={(command) => {
@@ -422,8 +424,8 @@ export default function App() {
                   void submit();
                 }
               }}
-              placeholder="Describe what you want to make"
-              aria-label="Message ViMax"
+              placeholder={t("Describe what you want to make")}
+              aria-label={t("Message ViMax")}
               disabled={chat.busy}
               rows={1}
             />
@@ -436,13 +438,13 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setWorkspaceUploads((current) => current.filter((item) => item.path !== file.path))}
-                      aria-label={`Remove ${file.name} from this message`}
+                      aria-label={t('Remove {name} from this message', {name: file.name})}
                     >
                       <X size={12} />
                     </button>
                   </span>
                 ))}
-                {uploadingFiles && <span className="composer-uploading">Uploading…</span>}
+                {uploadingFiles && <span className="composer-uploading">{t("Uploading…")}</span>}
               </div>
             )}
             <div className="composer-controls">
@@ -459,17 +461,17 @@ export default function App() {
                 className="composer-add"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={!selectedSessionId || uploadingFiles || chat.busy}
-                aria-label="Upload files to workspace"
+                aria-label={t("Upload files to workspace")}
                 aria-busy={uploadingFiles}
-                title={selectedSessionId ? 'Upload files to workspace' : 'Create or select a project first'}
+                title={selectedSessionId ? t("Upload files to workspace") : t("Create or select a project first")}
               >
                 <Plus size={20} />
               </button>
               <div className="composer-spacer" />
               {chat.busy ? (
-                <button className="send-button stop" onClick={() => void stop()} aria-label="Stop generation"><CircleStop size={18} /></button>
+                <button className="send-button stop" onClick={() => void stop()} aria-label={t("Stop generation")}><CircleStop size={18} /></button>
               ) : (
-                <button className="send-button" onClick={() => void submit()} disabled={!draft.trim() || uploadingFiles} aria-label="Send message"><ArrowUp size={19} /></button>
+                <button className="send-button" onClick={() => void submit()} disabled={!draft.trim() || uploadingFiles} aria-label={t("Send message")}><ArrowUp size={19} /></button>
               )}
             </div>
           </div>
@@ -526,23 +528,23 @@ function Sidebar({open, mobileOpen, sessions, selectedSessionId, activeView, onT
 }) {
   return (
     <>
-      {mobileOpen && <button className="sidebar-scrim" onClick={onMobileClose} aria-label="Close navigation" />}
+      {mobileOpen && <button className="sidebar-scrim" onClick={onMobileClose} aria-label={t("Close navigation")} />}
       <aside className={`sidebar ${open ? 'is-open' : 'is-collapsed'} ${mobileOpen ? 'is-mobile-open' : ''}`}>
         <div className="sidebar-brand">
           <strong>ViMax</strong>
-          <button className="icon-button sidebar-collapse desktop-only" onClick={onToggle} aria-label="Collapse navigation">
+          <button className="icon-button sidebar-collapse desktop-only" onClick={onToggle} aria-label={t("Collapse navigation")}>
             <PanelLeftClose size={17} />
           </button>
-          <button className="icon-button mobile-only" onClick={onMobileClose} aria-label="Close navigation"><X size={18} /></button>
+          <button className="icon-button mobile-only" onClick={onMobileClose} aria-label={t("Close navigation")}><X size={18} /></button>
         </div>
-        <nav className="primary-nav" aria-label="Primary navigation">
-          <button onClick={onNew}><FolderPlus size={17} /><span>New project</span></button>
-          <button className={activeView === 'workspace' ? 'is-active' : ''} onClick={onWorkspace}><Folder size={17} /><span>Workspace</span></button>
-          <button className={activeView === 'artifacts' ? 'is-active' : ''} onClick={onArtifacts}><Files size={17} /><span>Artifacts</span></button>
-          <button className={activeView === 'settings' ? 'is-active' : ''} onClick={onSettings}><Settings size={17} /><span>Settings</span></button>
+        <nav className="primary-nav" aria-label={t("Primary navigation")}>
+          <button onClick={onNew}><FolderPlus size={17} /><span>{t("New project")}</span></button>
+          <button className={activeView === 'workspace' ? 'is-active' : ''} onClick={onWorkspace}><Folder size={17} /><span>{t("Workspace")}</span></button>
+          <button className={activeView === 'artifacts' ? 'is-active' : ''} onClick={onArtifacts}><Files size={17} /><span>{t("Artifacts")}</span></button>
+          <button className={activeView === 'settings' ? 'is-active' : ''} onClick={onSettings}><Settings size={17} /><span>{t("Settings")}</span></button>
         </nav>
         <div className="session-section">
-          <div className="section-label"><span>Projects</span><span>{sessions.length}</span></div>
+          <div className="section-label"><span>{t("Projects")}</span><span>{sessions.length}</span></div>
           <div className="session-list">
             {sessions.map((session) => (
               <div
@@ -555,17 +557,17 @@ function Sidebar({open, mobileOpen, sessions, selectedSessionId, activeView, onT
                     <small>{relativeTime(session.updatedAt)} · {stageLabel(session.stage)}</small>
                   </span>
                 </button>
-                <button className="session-delete" onClick={() => onDelete(session)} aria-label={`Delete ${sessionTitle(session)}`} title="Delete project">
+                <button className="session-delete" onClick={() => onDelete(session)} aria-label={t('Delete {name}', {name: sessionTitle(session)})} title={t("Delete project")}>
                   <Trash2 size={14} />
                 </button>
               </div>
             ))}
-            {sessions.length === 0 && <span className="empty-list">No projects yet</span>}
+            {sessions.length === 0 && <span className="empty-list">{t("No projects yet")}</span>}
           </div>
         </div>
         <div className="sidebar-footer">
           <span className="avatar">V</span>
-          <div><strong>Local workspace</strong><small>Local · ViMax</small></div>
+          <div><strong>{t("Local workspace")}</strong><small>{t("Local · ViMax")}</small></div>
         </div>
       </aside>
     </>
@@ -576,7 +578,7 @@ function EmptyState({theme}: {theme: Theme}) {
   return (
     <section className="empty-state">
       <img className="empty-state-logo" src={theme === 'dark' ? '/vimax-light.svg' : '/vimax-dark.svg'} alt="ViMax" />
-      <h1>What should we create?</h1>
+      <h1>{t("What should we create?")}</h1>
     </section>
   );
 }
@@ -588,9 +590,9 @@ function ThemeToggle({theme, onToggle}: {theme: Theme; onToggle: () => void}) {
       type="button"
       className="icon-button theme-toggle"
       onClick={onToggle}
-      aria-label={dark ? 'Use light mode' : 'Use dark mode'}
+      aria-label={dark ? t("Use light mode") : t("Use dark mode")}
       aria-pressed={dark}
-      title={dark ? 'Light mode' : 'Dark mode'}
+      title={dark ? t("Light mode") : t("Dark mode")}
     >
       {dark ? <Sun size={18} /> : <Moon size={18} />}
     </button>
@@ -603,7 +605,7 @@ function MessageRow({message}: {message: Message}) {
     <article className={`message-row role-${message.role}`}>
       <div className="message-body">
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={{a: (props) => <a {...props} target="_blank" rel="noreferrer" />}}>
-          {message.text}
+          {message.role === 'error' ? translateError(message.text) : message.text}
         </ReactMarkdown>
       </div>
     </article>
@@ -611,14 +613,14 @@ function MessageRow({message}: {message: Message}) {
 }
 
 function ActivityRow({message}: {message: Message}) {
-  const stage = message.stage ? humanize(message.stage) : '';
-  const detail = stage.toLowerCase() === message.text.toLowerCase() ? message.text : [stage, message.text].filter(Boolean).join(' · ');
+  const stage = message.stage ? t(humanize(message.stage)) : '';
+  const detail = stage.toLowerCase() === translateError(message.text).toLowerCase() ? translateError(message.text) : [stage, translateError(message.text)].filter(Boolean).join(' · ');
   const toolKind = activityToolKind(message.tool);
   return (
     <div className={`activity-row status-${message.status || 'done'}`}>
       <span className={`activity-indicator tool-${toolKind}`}><ActivityToolIcon tool={message.tool} /></span>
       <div>
-        <strong>{humanize(message.tool || 'Workflow')}</strong>
+        <strong>{t(humanize(message.tool || "Workflow"))}</strong>
         <span>{detail}</span>
       </div>
     </div>
@@ -659,20 +661,20 @@ function ThinkingRow({messages}: {messages: Message[]}) {
   return (
     <div className="thinking-row">
       <span className="thinking-mark"><i /><i /><i /></span>
-      <span>{running ? `${humanize(running.tool || 'ViMax')} · ${running.text}` : 'ViMax is thinking'}</span>
+      <span>{running ? `${t(humanize(running.tool || 'ViMax'))} · ${t(running.text)}` : t("ViMax is thinking")}</span>
     </div>
   );
 }
 
 function SlashCommandMenu({matches, contextPercent, onSelect}: {matches: SlashCommandMatch[]; contextPercent: number; onSelect: (command: string) => void}) {
   return (
-    <div className="slash-command-menu" role="listbox" aria-label="Slash commands">
+    <div className="slash-command-menu" role="listbox" aria-label={t("Slash commands")}>
       {matches.length > 0 ? matches.map((command) => (
         <button key={command.name} role="option" aria-selected="false" onMouseDown={(event) => event.preventDefault()} onClick={() => onSelect(command.name)}>
           <code><span><b>{command.matchedPrefix}</b><span>{command.unmatchedSuffix}</span></span>{command.name === '/compact' && <em>{contextPercent}%</em>}</code>
-          <small>{command.description}</small>
+          <small>{t(command.description)}</small>
         </button>
-      )) : <span className="slash-command-empty">No matching commands</span>}
+      )) : <span className="slash-command-empty">{t("No matching commands")}</span>}
     </div>
   );
 }
@@ -724,16 +726,16 @@ function SettingsView() {
     }
   }
 
-  if (loading) return <div className="settings-loading">Loading configuration…</div>;
-  if (!config) return <div className="settings-loading is-error">{status || 'Configuration unavailable'}</div>;
+  if (loading) return <div className="settings-loading">{t("Loading configuration…")}</div>;
+  if (!config) return <div className="settings-loading is-error">{translateError(status) || t("Configuration unavailable")}</div>;
   return (
     <section className="settings-view">
       <header>
-        <div><span>Local configuration</span><h1>Settings</h1></div>
+        <div><span>{t("Local configuration")}</span><h1>{t("Settings")}</h1></div>
         <div className="settings-save-group">
-          {status && <span className={status === 'Saved' ? 'is-saved' : 'is-error'}>{status}</span>}
+          {status && <span className={status === 'Saved' ? 'is-saved' : 'is-error'}>{translateError(status)}</span>}
           <button className="settings-save" onClick={() => void save()} disabled={saving}>
-            <Save size={15} />{saving ? 'Saving…' : 'Save'}
+            <Save size={15} />{saving ? t("Saving…") : t("Save")}
           </button>
         </div>
       </header>
@@ -758,16 +760,16 @@ function ConfigSectionEditor({definition, value, onChange}: {
 }) {
   return (
     <section className="config-section">
-      <header><h2>{definition.title}</h2><p>{definition.description}</p></header>
+      <header><h2>{t(definition.title)}</h2><p>{t(definition.description)}</p></header>
       <div className="config-fields">
         {value.model_provider !== undefined && (
-          <label><span>Model provider</span><input value={value.model_provider} onChange={(event) => onChange('model_provider', event.target.value)} /></label>
+          <label><span>{t("Model provider")}</span><input value={value.model_provider} onChange={(event) => onChange('model_provider', event.target.value)} /></label>
         )}
-        <label><span>Model</span><input value={value.model} onChange={(event) => onChange('model', event.target.value)} /></label>
-        <label className="config-field-wide"><span>Base URL</span><input value={value.base_url} onChange={(event) => onChange('base_url', event.target.value)} inputMode="url" /></label>
+        <label><span>{t("Model")}</span><input value={value.model} onChange={(event) => onChange('model', event.target.value)} /></label>
+        <label className="config-field-wide"><span>{t("Base URL")}</span><input value={value.base_url} onChange={(event) => onChange('base_url', event.target.value)} inputMode="url" /></label>
         <label className="config-field-wide">
-          <span>API key <i className={value.has_api_key ? 'is-configured' : ''}>{value.has_api_key ? 'Configured' : 'Not configured'}</i></span>
-          <input type="password" value={value.api_key} onChange={(event) => onChange('api_key', event.target.value)} placeholder={value.has_api_key ? 'Leave blank to keep current key' : 'Enter API key'} autoComplete="off" />
+          <span>{t("API key")}<i className={value.has_api_key ? 'is-configured' : ''}>{value.has_api_key ? t("Configured") : t("Not configured")}</i></span>
+          <input type="password" value={value.api_key} onChange={(event) => onChange('api_key', event.target.value)} placeholder={value.has_api_key ? t("Leave blank to keep current key") : t("Enter API key")} autoComplete="off" />
         </label>
       </div>
     </section>
@@ -795,12 +797,12 @@ function DeleteProjectDialog({session, deleting, onCancel, onConfirm}: {
       <section className="delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-project-title">
         <span className="dialog-icon"><Trash2 size={18} /></span>
         <div className="dialog-copy">
-          <h2 id="delete-project-title">Delete project?</h2>
-          <p><strong>{sessionTitle(session)}</strong> and its generated files will be permanently removed.</p>
+          <h2 id="delete-project-title">{t("Delete project?")}</h2>
+          <p><strong>{sessionTitle(session)}</strong> {t("and its generated files will be permanently removed.")}</p>
         </div>
         <div className="dialog-actions">
-          <button onClick={onCancel} disabled={deleting} autoFocus>Cancel</button>
-          <button className="danger" onClick={onConfirm} disabled={deleting}>{deleting ? 'Deleting…' : 'Delete'}</button>
+          <button onClick={onCancel} disabled={deleting} autoFocus>{t("Cancel")}</button>
+          <button className="danger" onClick={onConfirm} disabled={deleting}>{deleting ? t("Deleting…") : t("Delete")}</button>
         </div>
       </section>
     </div>
@@ -834,24 +836,24 @@ function NewProjectDialog({open, name, error, creating, onNameChange, onCancel, 
       }}>
         <span className="dialog-icon is-create"><FolderPlus size={18} /></span>
         <div className="dialog-copy">
-          <h2 id="new-project-title">Create a new project</h2>
-          <p>Name the workspace before creating it.</p>
+          <h2 id="new-project-title">{t("Create a new project")}</h2>
+          <p>{t("Name the workspace before creating it.")}</p>
         </div>
         <label className="project-name-field">
-          <span>Project name</span>
+          <span>{t("Project name")}</span>
           <input
             value={name}
             onChange={(event) => onNameChange(event.target.value)}
-            placeholder="Untitled video"
+            placeholder={t("Untitled video")}
             maxLength={64}
             autoFocus
             disabled={creating}
           />
-          {error && <small role="alert">{error}</small>}
+          {error && <small role="alert">{translateError(error)}</small>}
         </label>
         <div className="dialog-actions">
-          <button type="button" onClick={onCancel} disabled={creating}>Cancel</button>
-          <button type="submit" className="primary" disabled={creating || !name.trim()}>{creating ? 'Creating…' : 'Create'}</button>
+          <button type="button" onClick={onCancel} disabled={creating}>{t("Cancel")}</button>
+          <button type="submit" className="primary" disabled={creating || !name.trim()}>{creating ? t("Creating…") : t("Create")}</button>
         </div>
       </form>
     </div>
@@ -859,11 +861,11 @@ function NewProjectDialog({open, name, error, creating, onNameChange, onCancel, 
 }
 
 function sessionTitle(session?: SessionSummary) {
-  if (!session) return 'New video';
+  if (!session) return t("New video");
   if (session.projectName) return session.projectName;
   const source = session.idea || session.summary;
   if (source) return source.length > 38 ? `${source.slice(0, 38).trim()}…` : source;
-  return session.sessionId.replace(/^\d{8}-\d{6}-?/, '') || 'Untitled video';
+  return session.sessionId.replace(/^\d{8}-\d{6}-?/, '') || t('Untitled video');
 }
 
 function stageLabel(stage: string) {
@@ -873,21 +875,22 @@ function stageLabel(stage: string) {
     narrative_planned: 'Plan ready',
     novel_planning: 'Planning novel',
     novel_planned: 'Novel ready',
+    novel_scene_rendered: 'Novel scenes rendered',
     rendering: 'Rendering',
     rendered: 'Rendered',
     error: 'Needs attention',
   };
-  return labels[stage] || humanize(stage || 'Created');
+  return t(labels[stage] || humanize(stage || 'Created'));
 }
 
 function relativeTime(value: string) {
   const timestamp = Date.parse(value);
-  if (!Number.isFinite(timestamp)) return 'Recently';
+  if (!Number.isFinite(timestamp)) return t("Recently");
   const delta = Math.max(0, Date.now() - timestamp);
   const minutes = Math.floor(delta / 60_000);
-  if (minutes < 1) return 'Now';
-  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 1) return t("Now");
+  if (minutes < 60) return t('{count}m', {count: minutes});
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
+  if (hours < 24) return t('{count}h', {count: hours});
+  return t('{count}d', {count: Math.floor(hours / 24)});
 }

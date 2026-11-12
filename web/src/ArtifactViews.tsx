@@ -1,3 +1,4 @@
+import {t, translateError} from './i18n';
 import {useEffect, useMemo, useState} from 'react';
 import {ChevronDown, ChevronUp, FileJson, Film, Files, Image as ImageIcon, Maximize2, Video, X} from 'lucide-react';
 import {getJsonArtifact} from './api';
@@ -63,10 +64,10 @@ export function ArtifactsView({session, artifacts}: {session?: SessionSummary; a
   return (
     <section className="artifacts-view">
       <header>
-        <div><span>Generated files</span><h1>{session ? projectTitle(session) : 'Artifacts'}</h1></div>
-        <span className="artifact-file-count">{jsonArtifacts.length} documents · {mediaArtifacts.length} visuals</span>
+        <div><span>{t("Generated files")}</span><h1>{session ? projectTitle(session) : t("Artifacts")}</h1></div>
+        <span className="artifact-file-count">{t('{documents} documents · {visuals} visuals', {documents: jsonArtifacts.length, visuals: mediaArtifacts.length})}</span>
       </header>
-      <div className="artifact-view-switcher" role="tablist" aria-label="Artifact type">
+      <div className="artifact-view-switcher" role="tablist" aria-label={t("Artifact type")}>
         {(['all', 'documents', 'visuals'] as const).map((option) => (
           <button
             key={option}
@@ -75,23 +76,23 @@ export function ArtifactsView({session, artifacts}: {session?: SessionSummary; a
             className={view === option ? 'is-selected' : ''}
             onClick={() => setView(option)}
           >
-            {option === 'all' ? 'All' : option === 'documents' ? 'Documents' : 'Visuals'}
+            {option === 'all' ? t("All") : option === 'documents' ? t("Documents") : t("Visuals")}
           </button>
         ))}
       </div>
       {!session ? (
-        <ArtifactsEmpty title="Select a project" detail="Project files appear here after planning" />
+        <ArtifactsEmpty title={t("Select a project")} detail={t("Project files appear here after planning")} />
       ) : (
         <>
           {(view === 'all' || view === 'documents') && (
             <section className="artifact-content-section">
-              {view === 'all' && <SectionHeading title="Project artifacts" detail="Documents with related visuals" />}
+              {view === 'all' && <SectionHeading title={t("Project artifacts")} detail={t("Documents with related visuals")} />}
               {jsonArtifacts.length === 0 ? (
-                <ArtifactsEmpty title="No structured files yet" detail="JSON artifacts appear here after planning" />
+                <ArtifactsEmpty title={t("No structured files yet")} detail={t("JSON artifacts appear here after planning")} />
               ) : (
                 <div className="artifact-browser">
-                  <nav className="artifact-document-list" aria-label="Generated JSON files">
-                    <div className="artifact-document-list-title"><span>Documents</span><span>{jsonArtifacts.length}</span></div>
+                  <nav className="artifact-document-list" aria-label={t("Generated JSON files")}>
+                    <div className="artifact-document-list-title"><span>{t("Documents")}</span><span>{jsonArtifacts.length}</span></div>
                     {jsonArtifacts.map((artifact) => (
                       <button
                         key={artifact.path}
@@ -99,23 +100,23 @@ export function ArtifactsView({session, artifacts}: {session?: SessionSummary; a
                         onClick={() => setSelectedPath(artifact.path)}
                       >
                         <FileJson size={16} />
-                        <span><strong>{friendlyArtifactTitle(artifact)}</strong><small>{formatBytes(artifact.size)}</small></span>
+                        <span><strong>{friendlyArtifactTitle(artifact, t)}</strong><small>{formatBytes(artifact.size)}</small></span>
                       </button>
                     ))}
                   </nav>
                   <article className={`artifact-document ${view === 'all' ? 'has-related-visuals' : ''}`}>
                     {selected && (
                       <header>
-                        <div><span>Structured view</span><h2>{friendlyArtifactTitle(selected)}</h2></div>
+                        <div><span>{t("Structured view")}</span><h2>{friendlyArtifactTitle(selected, t)}</h2></div>
                         <small>{formatBytes(selected.size)}</small>
                       </header>
                     )}
                     <div className="artifact-document-layout">
                       <div className="artifact-structured-content">
                         {loading ? (
-                          <div className="artifact-document-state">Loading document…</div>
+                          <div className="artifact-document-state">{t("Loading document…")}</div>
                         ) : error ? (
-                          <div className="artifact-document-state is-error">{error}</div>
+                          <div className="artifact-document-state is-error">{translateError(error)}</div>
                         ) : document !== undefined && selected ? (
                           <StructuredDocument value={document} artifact={selected} />
                         ) : null}
@@ -146,7 +147,7 @@ function VisualArtifacts({artifacts, onPreview}: {artifacts: Artifact[]; onPrevi
         <div className="render-grid">
           {artifacts.map((artifact) => (
             <article key={artifact.path} className="render-item">
-              <button className="render-media" onClick={() => onPreview(artifact)} aria-label={`Preview ${artifact.name}`}>
+              <button className="render-media" onClick={() => onPreview(artifact)} aria-label={t('Preview {name}', {name: artifact.name})}>
                 {artifact.kind === 'image'
                   ? <img src={mediaUrl(artifact)} alt={artifact.name} />
                   : <video src={mediaUrl(artifact)} muted playsInline preload="metadata" />}
@@ -162,8 +163,8 @@ function VisualArtifacts({artifacts, onPreview}: {artifacts: Artifact[]; onPrevi
       ) : (
         <div className="renders-empty">
           <Film size={24} />
-          <strong>No visual artifacts yet</strong>
-          <span>Images and videos appear here during rendering</span>
+          <strong>{t("No visual artifacts yet")}</strong>
+          <span>{t("Images and videos appear here during rendering")}</span>
         </div>
       )}
     </section>
@@ -172,15 +173,15 @@ function VisualArtifacts({artifacts, onPreview}: {artifacts: Artifact[]; onPrevi
 
 function RelatedVisuals({artifacts, onPreview}: {artifacts: Artifact[]; onPreview: (artifact: Artifact) => void}) {
   return (
-    <aside className="artifact-related-visuals" aria-label="Related visuals">
+    <aside className="artifact-related-visuals" aria-label={t("Related visuals")}>
       <header>
-        <div><span>Related visuals</span><strong>{artifacts.length}</strong></div>
-        <small>{artifacts.length > 0 ? 'Select to preview' : 'Awaiting render'}</small>
+        <div><span>{t("Related visuals")}</span><strong>{artifacts.length}</strong></div>
+        <small>{artifacts.length > 0 ? t("Select to preview") : t("Awaiting render")}</small>
       </header>
       {artifacts.length > 0 ? (
         <div className="related-visual-grid">
           {artifacts.map((artifact) => (
-            <button key={artifact.path} onClick={() => onPreview(artifact)} aria-label={`Preview ${visualArtifactLabel(artifact)}`}>
+            <button key={artifact.path} onClick={() => onPreview(artifact)} aria-label={t('Preview {name}', {name: visualArtifactLabel(artifact)})}>
               <span>
                 {artifact.kind === 'image'
                   ? <img src={mediaUrl(artifact)} alt={visualArtifactLabel(artifact)} />
@@ -195,7 +196,7 @@ function RelatedVisuals({artifacts, onPreview}: {artifacts: Artifact[]; onPrevie
       ) : (
         <div className="related-visual-empty">
           <ImageIcon size={19} />
-          <span>Matching images and clips will appear alongside this document.</span>
+          <span>{t("Matching images and clips will appear alongside this document.")}</span>
         </div>
       )}
     </aside>
@@ -213,10 +214,10 @@ function MediaPreviewDialog({artifact, onClose}: {artifact: Artifact; onClose: (
 
   return (
     <div className="media-preview-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="media-preview-dialog" role="dialog" aria-modal="true" aria-label={`Preview ${visualArtifactLabel(artifact)}`}>
+      <section className="media-preview-dialog" role="dialog" aria-modal="true" aria-label={t('Preview {name}', {name: visualArtifactLabel(artifact)})}>
         <header>
           <div><strong>{visualArtifactLabel(artifact)}</strong><span>{formatBytes(artifact.size)}</span></div>
-          <button className="icon-button" onClick={onClose} aria-label="Close preview"><X size={18} /></button>
+          <button className="icon-button" onClick={onClose} aria-label={t("Close preview")}><X size={18} /></button>
         </header>
         <div className="media-preview-stage">
           {artifact.kind === 'image'
@@ -295,64 +296,64 @@ export function StoryboardPanel({open, artifacts, activeRenderStage, onClose, on
   return (
     <aside className={`storyboard-panel ${open ? 'is-open' : ''}`}>
       <header>
-        <div><strong>Storyboard</strong><span>{previews.length > 0 ? `${index + 1} of ${previews.length}` : 'Preview'}</span></div>
-        <button className="icon-button" onClick={onClose} aria-label="Close storyboard preview"><X size={18} /></button>
+        <div><strong>{t("Storyboard")}</strong><span>{previews.length > 0 ? t('{current} of {total}', {current: index + 1, total: previews.length}) : t("Preview")}</span></div>
+        <button className="icon-button" onClick={onClose} aria-label={t("Close storyboard preview")}><X size={18} /></button>
       </header>
-      <section className="render-readiness" aria-label="Render readiness">
+      <section className="render-readiness" aria-label={t("Render readiness")}>
         <div className="render-readiness-summary">
-          <strong>{readiness.readyToRender ? 'Ready to render' : 'Planning incomplete'}</strong>
+          <strong>{readiness.readyToRender ? t("Ready to render") : t("Planning incomplete")}</strong>
         </div>
         <div className="render-checkpoints">
           <ReadinessCheckpoint
-            label="Storyboards"
-            detail={readiness.storyboards.count === 1 ? '1 shot' : `${readiness.storyboards.count} shots`}
+            label={t("Storyboards")}
+            detail={readiness.storyboards.count === 1 ? t('1 shot') : t('{count} shots', {count: readiness.storyboards.count})}
             status={readiness.storyboards.status}
           />
           <ReadinessCheckpoint
-            label="Shot descriptions"
+            label={t("Shot descriptions")}
             detail={`${readiness.shotDescriptions.count}/${readiness.shotDescriptions.expected || 0}`}
             status={readiness.shotDescriptions.status}
           />
           <ReadinessCheckpoint
-            label="Camera plans"
+            label={t("Camera plans")}
             detail={`${readiness.cameraPlans.count}/${readiness.cameraPlans.expected || 0}`}
             status={readiness.cameraPlans.status}
           />
         </div>
         <div className="render-stage-heading">
-          <span>Render</span>
-          <small>{activeRenderStage ? 'Generating' : readiness.render.finalVideo.status === 'ready' ? 'Complete' : readiness.render.started ? 'Partial' : 'Not started'}</small>
+          <span>{t("Render")}</span>
+          <small>{activeRenderStage ? t("Generating") : readiness.render.finalVideo.status === 'ready' ? t("Complete") : readiness.render.started ? t("Partial") : t("Not started")}</small>
         </div>
         <div className="render-checkpoints">
           <ReadinessCheckpoint
-            label="Keyframes"
+            label={t("Keyframes")}
             detail={`${readiness.render.frames.count}/${readiness.render.frames.expected || 0}`}
             status={readiness.render.frames.status}
             generating={activeCheckpoint === 'frames'}
           />
           <ReadinessCheckpoint
-            label="Video clips"
+            label={t("Video clips")}
             detail={`${readiness.render.clips.count}/${readiness.render.clips.expected || 0}`}
             status={readiness.render.clips.status}
             generating={activeCheckpoint === 'clips'}
           />
           <ReadinessCheckpoint
-            label="Final video"
-            detail={readiness.render.finalVideo.status === 'ready' ? 'Ready' : 'Pending'}
+            label={t("Final video")}
+            detail={readiness.render.finalVideo.status === 'ready' ? t("Ready") : t("Pending")}
             status={readiness.render.finalVideo.status}
             generating={activeCheckpoint === 'finalVideo'}
           />
         </div>
       </section>
       <div className="storyboard-description" aria-live="polite">
-        {loading ? <span>Loading storyboard…</span> : error ? <span className="is-error">{error}</span> : current ? <p>{current.description}</p> : <span>No storyboard descriptions yet</span>}
+        {loading ? <span>{t("Loading storyboard…")}</span> : error ? <span className="is-error">{translateError(error)}</span> : current ? <p>{current.description}</p> : <span>{t("No storyboard descriptions yet")}</span>}
       </div>
       <footer>
-        <button onClick={() => setIndex((currentIndex) => Math.max(0, currentIndex - 1))} disabled={index === 0 || previews.length === 0} aria-label="Previous storyboard">
-          <ChevronUp size={17} /><span>Previous</span>
+        <button onClick={() => setIndex((currentIndex) => Math.max(0, currentIndex - 1))} disabled={index === 0 || previews.length === 0} aria-label={t("Previous storyboard")}>
+          <ChevronUp size={17} /><span>{t("Previous")}</span>
         </button>
-        <button onClick={() => setIndex((currentIndex) => Math.min(previews.length - 1, currentIndex + 1))} disabled={index >= previews.length - 1 || previews.length === 0} aria-label="Next storyboard">
-          <ChevronDown size={17} /><span>Next</span>
+        <button onClick={() => setIndex((currentIndex) => Math.min(previews.length - 1, currentIndex + 1))} disabled={index >= previews.length - 1 || previews.length === 0} aria-label={t("Next storyboard")}>
+          <ChevronDown size={17} /><span>{t("Next")}</span>
         </button>
       </footer>
     </aside>
@@ -370,27 +371,27 @@ function ReadinessCheckpoint({label, detail, status, generating = false}: {label
 }
 
 function StatusLight({status, generating = false}: {status: ReadinessStatus; generating?: boolean}) {
-  return <i className={`status-light is-${status} ${generating ? 'is-generating' : ''}`} aria-label={generating ? `${status}, generating` : status} />;
+  return <i className={`status-light is-${status} ${generating ? 'is-generating' : ''}`} aria-label={generating ? `${t(status)}, ${t('Generating')}` : t(status)} />;
 }
 
 function StructuredDocument({value, artifact}: {value: JsonValue; artifact: Artifact}) {
   if (Array.isArray(value)) {
-    if (value.length === 0) return <div className="structured-empty">This document is empty</div>;
-    if (value.every(isJsonPrimitive)) return <StructuredField label="Contents" value={formatStructuredValue(value)} />;
+    if (value.length === 0) return <div className="structured-empty">{t("This document is empty")}</div>;
+    if (value.every(isJsonPrimitive)) return <StructuredField label={t("Contents")} value={formatStructuredValue(value, undefined, t)} />;
     return (
       <div className="structured-records">
         {value.map((record, index) => (
-          <StructuredRecord key={index} title={structuredRecordTitle(record, index, artifact)} value={record} depth={0} />
+          <StructuredRecord key={index} title={structuredRecordTitle(record, index, artifact, t)} value={record} depth={0} />
         ))}
       </div>
     );
   }
-  if (isJsonObject(value)) return <StructuredRecord title="Overview" value={value} depth={0} />;
-  return <StructuredField label="Contents" value={formatStructuredValue(value)} />;
+  if (isJsonObject(value)) return <StructuredRecord title={t("Overview")} value={value} depth={0} />;
+  return <StructuredField label={t("Contents")} value={formatStructuredValue(value, undefined, t)} />;
 }
 
 function StructuredRecord({title, value, depth}: {title: string; value: JsonValue; depth: number}) {
-  if (!isJsonObject(value)) return <StructuredField label={title} value={formatStructuredValue(value)} />;
+  if (!isJsonObject(value)) return <StructuredField label={title} value={formatStructuredValue(value, undefined, t)} />;
   const entries = Object.entries(value).filter(([key]) => !isArtifactPathField(key));
   const fields = entries.filter(([, entryValue]) => isJsonPrimitive(entryValue) || isPrimitiveArray(entryValue));
   const nested = entries.filter(([, entryValue]) => !isJsonPrimitive(entryValue) && !isPrimitiveArray(entryValue));
@@ -400,21 +401,21 @@ function StructuredRecord({title, value, depth}: {title: string; value: JsonValu
       {fields.length > 0 && (
         <div className="structured-fields">
           {fields.map(([key, entryValue]) => (
-            <StructuredField key={key} label={friendlyFieldLabel(key)} value={formatStructuredValue(entryValue, key)} />
+            <StructuredField key={key} label={friendlyFieldLabel(key, t)} value={formatStructuredValue(entryValue, key, t)} />
           ))}
         </div>
       )}
       {nested.map(([key, entryValue]) => (
-        <StructuredNested key={key} label={friendlyFieldLabel(key)} value={entryValue} depth={depth + 1} />
+        <StructuredNested key={key} label={friendlyFieldLabel(key, t)} value={entryValue} depth={depth + 1} />
       ))}
     </section>
   );
 }
 
 function StructuredNested({label, value, depth}: {label: string; value: JsonValue; depth: number}) {
-  if (depth > 5) return <StructuredField label={label} value="Additional structured details" />;
+  if (depth > 5) return <StructuredField label={label} value={t("Additional structured details")} />;
   if (Array.isArray(value)) {
-    if (value.length === 0) return <StructuredField label={label} value="None" />;
+    if (value.length === 0) return <StructuredField label={label} value={t("None")} />;
     return (
       <section className="structured-nested">
         <h4>{label}</h4>
@@ -449,7 +450,7 @@ function isPrimitiveArray(value: JsonValue): value is Array<string | number | bo
 }
 
 function projectTitle(session: SessionSummary): string {
-  return session.projectName || session.idea || session.summary || 'Untitled video';
+  return session.projectName || session.idea || session.summary || t('Untitled video');
 }
 
 function formatBytes(bytes: number) {
@@ -473,7 +474,7 @@ function visualArtifactLabel(artifact: Artifact): string {
     .replace(/\b\w/g, (character) => character.toUpperCase());
   if (portrait) return `${portrait[1]} · ${base}`;
   const context = [];
-  if (scene !== undefined) context.push(`Scene ${Number(scene) + 1}`);
-  if (shot !== undefined) context.push(`Shot ${Number(shot) + 1}`);
+  if (scene !== undefined) context.push(`${t('Scene')} ${Number(scene) + 1}`);
+  if (shot !== undefined) context.push(`${t('Shot')} ${Number(shot) + 1}`);
   return context.length > 0 ? `${context.join(' · ')} · ${base}` : base;
 }

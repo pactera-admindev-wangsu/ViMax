@@ -87,8 +87,8 @@ export function relatedVisualArtifacts(documentArtifact: Artifact, artifacts: Ar
   return related.sort((left, right) => left.path.localeCompare(right.path, undefined, {numeric: true}));
 }
 
-export function friendlyFieldLabel(key: string): string {
-  if (FIELD_LABELS[key]) return FIELD_LABELS[key];
+export function friendlyFieldLabel(key: string, localize = (text: string) => text): string {
+  if (FIELD_LABELS[key]) return localize(FIELD_LABELS[key]);
   return key
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (character) => character.toUpperCase());
@@ -99,37 +99,37 @@ export function isArtifactPathField(key: string): boolean {
   return normalized.split('_').some((part) => part === 'path' || part === 'dir' || part === 'directory');
 }
 
-export function friendlyArtifactTitle(artifact: Artifact): string {
-  const baseTitle = FILE_TITLES[artifact.name.toLowerCase()]
+export function friendlyArtifactTitle(artifact: Artifact, localize = (text: string) => text): string {
+  const baseTitle = (FILE_TITLES[artifact.name.toLowerCase()] ? localize(FILE_TITLES[artifact.name.toLowerCase()]) : undefined)
     || artifact.name.replace(/\.json$/i, '').replace(/[_-]+/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
   const sceneMatch = artifact.path.match(/(?:^|\/)scene_(\d+)(?:\/|$)/i);
   const shotMatch = artifact.path.match(/(?:^|\/)shots\/(\d+)(?:\/|$)/i);
   const context = [];
-  if (sceneMatch) context.push(`Scene ${Number(sceneMatch[1]) + 1}`);
-  if (shotMatch) context.push(`Shot ${Number(shotMatch[1]) + 1}`);
+  if (sceneMatch) context.push(`${localize('Scene')} ${Number(sceneMatch[1]) + 1}`);
+  if (shotMatch) context.push(`${localize('Shot')} ${Number(shotMatch[1]) + 1}`);
   return context.length ? `${context.join(' · ')} · ${baseTitle}` : baseTitle;
 }
 
-export function structuredRecordTitle(value: JsonValue, index: number, artifact: Artifact): string {
+export function structuredRecordTitle(value: JsonValue, index: number, artifact: Artifact, localize = (text: string) => text): string {
   if (isJsonObject(value)) {
     for (const key of ['name', 'title', 'character_name', 'scene_title']) {
       const candidate = value[key];
       if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
     }
     const explicitIndex = value.idx;
-    if (typeof explicitIndex === 'number') return `${recordNoun(artifact)} ${explicitIndex + 1}`;
+    if (typeof explicitIndex === 'number') return `${localize(recordNoun(artifact))} ${explicitIndex + 1}`;
   }
-  return `${recordNoun(artifact)} ${index + 1}`;
+  return `${localize(recordNoun(artifact))} ${index + 1}`;
 }
 
-export function formatStructuredValue(value: JsonValue, key = ''): string {
-  if (value === null) return 'Not specified';
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+export function formatStructuredValue(value: JsonValue, key = '', localize = (text: string) => text): string {
+  if (value === null) return localize('Not specified');
+  if (typeof value === 'boolean') return localize(value ? 'Yes' : 'No');
   if (typeof value === 'number') return isIndexKey(key) ? String(value + 1) : String(value);
-  if (typeof value === 'string') return value.trim() || 'Not specified';
+  if (typeof value === 'string') return value.trim() || localize('Not specified');
   if (Array.isArray(value) && value.every(isJsonPrimitive)) {
-    if (value.length === 0) return 'None';
-    return value.map((item) => typeof item === 'number' && isIndexListKey(key) ? item + 1 : formatStructuredValue(item)).join(', ');
+    if (value.length === 0) return localize('None');
+    return value.map((item) => typeof item === 'number' && isIndexListKey(key) ? item + 1 : formatStructuredValue(item, undefined, localize)).join(', ');
   }
   return '';
 }
