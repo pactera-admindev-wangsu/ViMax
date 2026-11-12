@@ -31,3 +31,24 @@ AGENTS.md
 project_plan/
 project_working/
 user_idea/
+
+# ローカルのモデルと生成キャッシュ
+models/
+checkpoints/
+*.gguf
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.onnx
+.cache/
+.uv-cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ローカルの認証情報
+.aws/
+.ssh/
+*.pem
+*.key
